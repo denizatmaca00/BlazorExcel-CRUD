@@ -1,0 +1,150 @@
+﻿@page "/"
+@using BlazorOne.Models;
+@using BlazorOne.Services;
+@inject IEmpServices empServices;
+@inject IJSRuntime JSRuntime;
+
+@inject IJSRuntime js
+@using Microsoft.JSInterop;
+
+@using BlazorOne.XLS
+
+<PageTitle>Index</PageTitle>
+
+    <EditForm Model="@employee">
+    <table class="table table-striped table-bordered">
+        <tr>
+                <td> İsim</td> 
+                <td> Şirket</td> 
+                <td> Deneyim Yılı</td> 
+                <td></td> 
+            </tr>
+
+            <tr>
+                    <td>
+                        <InputText @bind-Value="employee.Name" class="form-control"></InputText>
+                    </td>
+                    <td>
+                        <InputText @bind-Value="employee.Company" class="form-control"></InputText>
+                    </td>
+                    <td>
+                        <InputText @bind-Value="employee.YearsOfExperience" class="form-control"></InputText>
+                    </td>
+                    <td>
+                        <input type="button" class="btn btn-primary" value="Ekle" @onclick="AddNewEmployee"/>  
+                    </td>
+
+             </tr>
+    </table>
+
+
+</EditForm>
+
+
+    <table class="table table-striped table-bordered text-dark">
+         <thead>
+            <tr>
+                <th> Id</th> 
+                <th> İsim</th> 
+                <th> Şirket</th> 
+                <th> Deneyim Yılı</th> 
+                <th> Güncelle </th> 
+                <th> Sil</th> 
+            </tr>
+          </thead>
+         <tbody>
+             @foreach (var (index ,emp) in empList.Select((emp, i) => (i+1, emp)))
+             {
+             
+                   <tr>
+                        <td>@emp.Id </td>
+                        <td><input @bind ="emp.Name" /></td>
+                        <td><input @bind ="emp.Company" /></td>
+                        <td><input @bind ="emp.YearsOfExperience" /></td>
+                        <td>
+                             <input type="button" class="btn btn-primary" value="Güncelle" @onclick="(() => UpdateClick(emp))" />
+                        </td>
+                        <td>
+                             <input type="button" class="btn btn-primary" value="Sil" @onclick="(() => DeleteClick(emp.Id))" />
+
+                        </td>
+                   </tr>
+              }
+              <td>
+                             <input type="button" class="btn btn-primary" value="Excel Ekle" @onclick="@ClickExportXLS" />
+
+                        </td>
+        
+           </tbody>       
+              
+        </table>
+
+@code{
+    private Employee[] employees;
+    private Employee employee = new Employee();
+    private List<Employee> empList =new List<Employee>();
+
+    protected override async Task OnInitializedAsync()
+    {   
+
+        GetEmployees();
+        employees = empList.ToArray();
+
+    }
+    private void GetEmployees()
+    {
+        empList= empServices.GetEmployees();
+    }
+
+
+    public async void AddNewEmployee()
+    {
+        var response =  empServices.AddNewEmployee(employee);
+        if(response != null)
+        {
+            GetEmployees();
+            await Alert("Ekleme Başarılı");
+            this.StateHasChanged();
+        }
+    }
+    public async void UpdateClick(Employee employee)
+    {
+        var response =  empServices.UpdateEmployee(employee);
+        if(response != null)
+        {
+            GetEmployees();
+            await Alert("Güncelleme Başarılı");
+            this.StateHasChanged();
+
+        }
+    }
+    public async void DeleteClick(int employeeId)
+    {
+        var response =  empServices.DeleteNewEmployee(employeeId);
+        if(response != null)
+        {
+            GetEmployees();
+            await Alert("Silme Başarılı");
+            this.StateHasChanged();
+
+        }
+    }
+
+    private async void ClickExportXLS()
+    {
+        
+        var xls = new Excel();
+        //string forecasts = "BlazorOne/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        await xls.GenerateEmployeeAsync(js, employees, "export.xlsx");
+        
+    }
+    
+    private async Task Alert (string Message)
+    {
+        await JSRuntime.InvokeAsync<object>("Alert", Message);
+
+    }
+    
+}
+
+

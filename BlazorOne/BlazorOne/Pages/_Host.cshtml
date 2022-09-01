@@ -1,0 +1,9 @@
+﻿@page "/"
+@namespace BlazorOne.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "_Layout";
+}
+    <script src="~/script.js"></script>
+
+<component type="typeof(App)" render-mode="ServerPrerendered" />
